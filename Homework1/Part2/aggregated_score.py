@@ -1,7 +1,7 @@
 import numpy as np
 import unittest
 
-def generate_random_data(department: str, mean: int, variance: int, num_samples: int) -> dict:
+def generate_random_data(importance: int, mean: int, variance: int, num_samples: int) -> dict:
     # generate random data using numpy
     user_threats = np.random.randint(max(mean - variance, 0),
                                           min(mean + variance + 1, 90), num_samples)
@@ -50,5 +50,75 @@ def get_aggregated_threat_score(departments: dict) -> int:
 class TestSecurityCheck(unittest.TestCase):
 
     def test_department_score(self):
-        self.assertAlmostEqual()
-        pass
+        # Check if the department score calculation works correctly
+        scores = np.array([10, 20, 30])
+        self.assertAlmostEqual(get_department_score(scores), 20, places=1)
+
+    def test_aggregated_threat_score_uniform(self):
+        # Test case with uniform threat scores across departments
+        departments = [
+            generate_random_data(50, 30, 5, 3),
+            generate_random_data(50, 30, 5, 3),
+            generate_random_data(50, 30, 5, 3),
+            generate_random_data(50, 30, 5, 3),
+            generate_random_data(50, 30, 5, 3)
+        ]
+        score = get_aggregated_threat_score(departments)
+        self.assertGreater(score, 0)
+        self.assertLessEqual(score, 90)
+
+    def test_aggregated_threat_score_high_variability(self):
+        # High variability in threat scores and importance
+        departments = [
+            generate_random_data(100, 10, 5, 1),
+            generate_random_data(200, 50, 10, 2),
+            generate_random_data(150, 70, 20, 5),
+            generate_random_data(100, 20, 10, 4),
+            generate_random_data(50, 40, 5, 3)
+        ]
+        score = get_aggregated_threat_score(departments)
+        self.assertGreater(score, 0)
+        self.assertLessEqual(score, 90)
+
+    def test_aggregated_threat_score_single_high_threat(self):
+        # Single department has high threat score
+        departments = [
+            generate_random_data(100, 5, 2, 1),
+            generate_random_data(100, 5, 2, 1),
+            generate_random_data(100, 90, 5, 5),  # High threat and high importance
+            generate_random_data(100, 5, 2, 1),
+            generate_random_data(100, 5, 2, 1)
+        ]
+        score = get_aggregated_threat_score(departments)
+        self.assertGreater(score, 50)  # High importance should affect the score
+        self.assertLessEqual(score, 90)
+
+    def test_aggregated_threat_score_varying_user_counts(self):
+        # Departments have varying user counts
+        departments = [
+            generate_random_data(10, 30, 5, 3),
+            generate_random_data(200, 30, 5, 3),
+            generate_random_data(100, 30, 5, 3),
+            generate_random_data(50, 30, 5, 3),
+            generate_random_data(150, 30, 5, 3)
+        ]
+        score = get_aggregated_threat_score(departments)
+        self.assertGreater(score, 0)
+        self.assertLessEqual(score, 90)
+
+    def test_aggregated_threat_score_outliers(self):
+        # Departments contain outliers in threat scores
+        departments = [
+            generate_random_data(50, 30, 20, 3),
+            generate_random_data(50, 10, 20, 2),
+            generate_random_data(50, 60, 20, 5),
+            generate_random_data(50, 45, 20, 4),
+            generate_random_data(50, 20, 20, 1)
+        ]
+        score = get_aggregated_threat_score(departments)
+        self.assertGreater(score, 0)
+        self.assertLessEqual(score, 90)
+
+
+
+
